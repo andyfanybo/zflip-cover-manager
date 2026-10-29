@@ -2,7 +2,7 @@ package local.covermanager;
 
 import java.util.*;
 
-/** Format verified against MultiStar 9.1.09; preserve all unrelated fields verbatim. */
+/** Parse the MultiStar app-list fields and preserve unrelated fields verbatim. */
 public final class Repository {
     public static final String KEY = "multistar_setting_repository";
     private final String[] fields;

@@ -11,7 +11,7 @@
     <string name="help">Help</string>
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
-    <string name="read_only">MultiStar 9.1.09 required. Read-only mode.</string>
+    <string name="read_only">Install or enable MultiStar first.</string>
     <string name="needs_grant">Open Setup to authorize with Shizuku or ADB.</string>
     <string name="no_matches">No matching apps</string>
     <string name="no_permission">Write permission has not been granted.</string>
@@ -28,13 +28,13 @@
     <string name="undo_failed">Could not verify the undo.</string>
     <string name="undone">Undone. Switch cover widgets to refresh icons if needed.</string>
     <string name="no_launch">This app has no launchable activity.</string>
-    <string name="help_title">Help · v0.3</string>
+    <string name="help_title">Help</string>
     <string name="setup_title">Setup</string>
     <string name="shizuku_option">Authorize with Shizuku and add entry</string>
     <string name="adb_option">ADB already granted: add / repair entry</string>
     <string name="instructions_option">Installation help</string>
-    <string name="grant_first">Authorize first and check MultiStar compatibility.</string>
-    <string name="compat_first">MultiStar 9.1.09 and a compatible configuration are required.</string>
+    <string name="grant_first">Authorize first and check the configuration format.</string>
+    <string name="compat_first">MultiStar must be installed and its configuration format must be readable.</string>
     <string name="shizuku_stopped">Shizuku is not running. Start its service, then return here.</string>
     <string name="shizuku_version">Shizuku v13 or newer is required.</string>
     <string name="waiting_grant">Waiting for Shizuku authorization…</string>
@@ -58,5 +58,5 @@
     <string name="cm_target_invalid">Invalid app package or user ID.</string>
     <string name="cm_grant_timeout">The grant command timed out. Retry.</string>
     <string name="cm_grant_output">The grant command returned too much output.</string>
-    <string name="help_text">Select a checkbox to add an app to the MultiStar cover list; clear it to remove the app. Tap an app name to try opening it on the current screen. Tap Refresh after installing a new app.\n\nIf MultiStar icons have not refreshed, switch to another cover widget and back.\n\nOption 1: install and authorize from a computer with ADB.\nOption 2: install the APK on your phone. With Shizuku running, open Setup, choose Shizuku authorization, and allow the request. Permission is granted once; a continuous connection is not required.\n\nShizuku v13 or newer must be running, and you must be able to open this tool for the first time. Installing Shizuku alone is not sufficient.\n\nOnly MultiStar 9.1.09 is supported for writing. No Internet permission is requested. Undo checks for changes made by other apps.\n\nChange the interface language under Setup → Language.</string>
+    <string name="help_text">Select apps to add them to the MultiStar cover list. Clear a checkbox to remove an app. Tap Refresh after installing a new app.\n\nFor first-time setup, open Setup and use Shizuku, or grant permission with ADB. Shizuku v13+ must be running, and you must be able to open this app first.\n\nIf icons have not refreshed, switch cover widgets and back.\n\nThe app does not restrict MultiStar versions. An unrecognized configuration format is read-only.\n\nChange the display language under Setup → Language.</string>
 </resources>

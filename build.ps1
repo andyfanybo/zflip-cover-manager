@@ -54,7 +54,7 @@ $taskKey=if($KeyStore){$KeyStore}else{Join-Path $projectRoot 'development.p12'}
 if(-not(Test-Path -LiteralPath $taskKey)){
     Run-Native (Join-Path $Jdk 'bin\keytool.exe') @('-genkeypair','-keystore',$taskKey,'-storetype','PKCS12','-storepass','covermanager-local','-keypass','covermanager-local','-alias','covermanager','-keyalg','RSA','-keysize','2048','-validity','10000','-dname','CN=Cover Manager Development')
 }
-$taskApk=Join-Path $taskBuild 'CoverManager-v0.3.0.apk'
+$taskApk=Join-Path $taskBuild 'CoverManager-v0.3.1.apk'
 Run-Native $taskJava @('-jar',(Join-Path $taskTools 'lib\apksigner.jar'),'sign','--ks',$taskKey,'--ks-pass','pass:covermanager-local','--out',$taskApk,$taskAligned)
 Run-Native $taskJava @('-jar',(Join-Path $taskTools 'lib\apksigner.jar'),'verify','--verbose',$taskApk)
 Write-Output "Built: $taskApk"

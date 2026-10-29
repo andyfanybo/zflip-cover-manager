@@ -12,7 +12,8 @@ function Invoke-Device([string[]]$Arguments) {
 }
 function Quote-Shell([string]$Value){return "'"+$Value.Replace("'","'\''")+"'"}
 $version=Invoke-Device @('shell','dumpsys','package','com.samsung.android.multistar')
-if($version -notmatch '(?m)^\s*versionName=9\.1\.09\s*$'){throw 'Requires MultiStar 9.1.09; no settings changed.'}
+if($version -notmatch '(?m)^\s*versionName=([^\r\n]+)'){throw 'MultiStar is not installed.'}
+$installedVersion=$Matches[1].Trim()
 $taskUser=Invoke-Device @('shell','am','get-current-user')
 if($taskUser -ne '0'){throw 'This setup script supports the primary Android user only.'}
 $key='multistar_setting_repository'
@@ -37,7 +38,7 @@ if($Preview){Write-Output 'Preview passed: compatible configuration. Only fields
 if(-not(Test-Path -LiteralPath $ApkPath -PathType Leaf)){throw 'APK file not found.'}
 New-Item -ItemType Directory -Force -Path $BackupDirectory | Out-Null
 $backupPath=Join-Path $BackupDirectory ((Get-Date -Format 'yyyyMMdd-HHmmss-fff')+'.json')
-@{namespace='secure';key=$key;value=$before;multistar='9.1.09'} | ConvertTo-Json | Set-Content -LiteralPath $backupPath -Encoding UTF8
+@{namespace='secure';key=$key;value=$before;multistar=$installedVersion} | ConvertTo-Json | Set-Content -LiteralPath $backupPath -Encoding UTF8
 Write-Output (Invoke-Device @('install','-r',(Resolve-Path -LiteralPath $ApkPath).Path))
 Invoke-Device @('shell','pm','grant','--user','0','local.covermanager','android.permission.WRITE_SECURE_SETTINGS') | Out-Null
 if((Invoke-Device @('shell','settings','get','secure',$key)) -cne $before){throw 'Configuration changed concurrently; retry. No settings written.'}

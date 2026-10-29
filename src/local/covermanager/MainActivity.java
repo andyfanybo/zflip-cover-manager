@@ -21,7 +21,7 @@ public class MainActivity extends Activity {
     private EditText search;
     private Button filter;
     private boolean selectedOnly;
-    private boolean supported;
+    private boolean multistarAvailable;
     private boolean permission;
     private Repository repository;
     private List<ResolveInfo> apps = new ArrayList<>();
@@ -105,11 +105,11 @@ public class MainActivity extends Activity {
     @Override protected void onResume() { super.onResume(); reload(); }
     @Override protected void onDestroy(){Shizuku.removeRequestPermissionResultListener(shizukuPermission);releaseGrantService();super.onDestroy();}
     private String read() { return Settings.Secure.getString(getContentResolver(),Repository.KEY); }
-    private boolean writable() {return supported && permission && repository!=null;}
+    private boolean writable() {return multistarAvailable && permission && repository!=null;}
     private void reload() {
         permission=checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS")==PackageManager.PERMISSION_GRANTED;
-        try { supported="9.1.09".equals(getPackageManager().getPackageInfo("com.samsung.android.multistar",0).versionName); }
-        catch(Exception e){supported=false;}
+        try { multistarAvailable=getPackageManager().getApplicationInfo("com.samsung.android.multistar",0).enabled; }
+        catch(Exception e){multistarAvailable=false;}
         try { repository=new Repository(read()); } catch(Exception e){repository=null;notice=errorText(e.getMessage());}
         Intent i=new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
         List<ResolveInfo> found=getPackageManager().queryIntentActivities(i,0);
@@ -141,7 +141,7 @@ public class MainActivity extends Activity {
             check.setOnClickListener(v->change(p,check.isChecked())); row.addView(check,new LinearLayout.LayoutParams(dp(43),dp(43)));rows.addView(row);
             View line=new View(this);line.setBackgroundColor(Color.rgb(42,51,55));rows.addView(line,new LinearLayout.LayoutParams(-1,dp(.5f)));
         }
-        String message=!supported?s("read_only"):!permission?s("needs_grant"):repository==null?notice:s("counts",selected,shown);
+        String message=!multistarAvailable?s("read_only"):!permission?s("needs_grant"):repository==null?notice:s("counts",selected,shown);
         status.setText(message+(notice.isEmpty()?"":"\n"+notice));
         if(shown==0)rows.addView(text(s("no_matches"),14));
     }
@@ -195,7 +195,7 @@ public class MainActivity extends Activity {
     private void authorizeWithShizuku(){
         if(authorizing)return;
         try {
-            if(!supported||repository==null)throw new IllegalStateException(s("compat_first"));
+            if(!multistarAvailable||repository==null)throw new IllegalStateException(s("compat_first"));
             if(!Shizuku.pingBinder())throw new IllegalStateException(s("shizuku_stopped"));
             if(Shizuku.getVersion()<13)throw new IllegalStateException(s("shizuku_version"));
             authorizing=true;notice=s("waiting_grant");render();
