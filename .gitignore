@@ -1,0 +1,11 @@
+/build/
+/libs/
+*.p12
+*.jks
+*.keystore
+*.apk
+*.idsig
+.covermanager-backups/
+local.properties
+.idea/
+*.log
