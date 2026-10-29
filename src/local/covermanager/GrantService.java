@@ -25,11 +25,11 @@ public final class GrantService extends Binder {
             // No caller-supplied package, permission, user, or shell command is accepted.
             java.lang.Process process=new ProcessBuilder("/system/bin/pm","grant","--user",Integer.toString(allowedUid/100000),
                 "local.covermanager","android.permission.WRITE_SECURE_SETTINGS").redirectErrorStream(true).start();
-            if(!process.waitFor(12,TimeUnit.SECONDS)){process.destroy();throw new IOException("授权命令超时，请重试");}
+            if(!process.waitFor(12,TimeUnit.SECONDS)){process.destroy();throw new IOException("cm_grant_timeout");}
             ByteArrayOutputStream output=new ByteArrayOutputStream();byte[] buffer=new byte[512];int count;
-            try(InputStream stream=process.getInputStream()){while((count=stream.read(buffer))!=-1){if(output.size()+count>8192)throw new IOException("返回内容过长");output.write(buffer,0,count);}}
+            try(InputStream stream=process.getInputStream()){while((count=stream.read(buffer))!=-1){if(output.size()+count>8192)throw new IOException("cm_grant_output");output.write(buffer,0,count);}}
             if(process.exitValue()!=0)throw new IOException(output.toString("UTF-8").trim());
-            reply.writeNoException();reply.writeString("权限授予完成");
+            reply.writeNoException();reply.writeString("Permission granted");
         } catch(Exception e){reply.writeException(new IllegalStateException(e.getMessage(),e));}
         return true;
     }

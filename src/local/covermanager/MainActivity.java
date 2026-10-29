@@ -34,11 +34,37 @@ public class MainActivity extends Activity {
     private final Shizuku.OnRequestPermissionResultListener shizukuPermission=(code,result)->{
         if(code!=42)return;
         if(result==PackageManager.PERMISSION_GRANTED)bindGrantService();
-        else {authorizing=false;notice="Shizuku 授权被拒绝，可在 Shizuku 中重新允许";render();}
+        else {authorizing=false;notice=s("shizuku_denied");render();}
     };
     private Shizuku.UserServiceArgs grantArgs;
     private ServiceConnection grantConnection;
-    private final Runnable grantTimeout=()->{if(authorizing){authorizing=false;releaseGrantService();notice="等待授权服务超时，请确认 Shizuku 仍在运行后重试";render();}};
+    private final Runnable grantTimeout=()->{if(authorizing){authorizing=false;releaseGrantService();notice=s("grant_timeout");render();}};
+
+    private String s(String key,Object... args){
+        int id=getResources().getIdentifier(key,"string",getPackageName());
+        if(id==0)throw new IllegalStateException("Missing string: "+key);
+        return getString(id,args);
+    }
+    private String errorText(String message){
+        if(message==null)return s("save_failed");
+        for(String key:new String[]{"cm_config_missing","cm_config_format","cm_list_format","cm_target_invalid","cm_grant_timeout","cm_grant_output"})
+            if(message.contains(key))return s(key);
+        return message;
+    }
+    @Override protected void attachBaseContext(Context base){
+        String choice=base.getSharedPreferences("ui",MODE_PRIVATE).getString("language","");
+        if(!choice.isEmpty()){
+            android.content.res.Configuration config=new android.content.res.Configuration(base.getResources().getConfiguration());
+            config.setLocale(Locale.forLanguageTag(choice));base=base.createConfigurationContext(config);
+        }
+        super.attachBaseContext(base);
+    }
+    private void chooseLanguage(){
+        new AlertDialog.Builder(this).setTitle(s("language_title"))
+            .setItems(new String[]{s("system_language"),"简体中文","English"},(dialog,which)->{
+                getSharedPreferences("ui",MODE_PRIVATE).edit().putString("language",new String[]{"","zh","en"}[which]).apply();recreate();
+            }).setNegativeButton(s("cancel"),null).show();
+    }
     private int dp(float n) { return (int)(n*getResources().getDisplayMetrics().density+.5f); }
     private TextView text(String value, int sp) {
         TextView t=new TextView(this); t.setText(value); t.setTextSize(sp); t.setTextColor(Color.WHITE); return t;
@@ -59,18 +85,18 @@ public class MainActivity extends Activity {
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.rgb(17,24,27)); root.setPadding(dp(12),dp(5),dp(12),dp(5));
         LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title=text("副屏应用管理",18); title.setTypeface(null,Typeface.BOLD); title.setTextColor(accent);
+        TextView title=text(s("app_name"),18); title.setTypeface(null,Typeface.BOLD); title.setTextColor(accent);
         header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
-        header.addView(button("授权 / 入口",()->setup()),new LinearLayout.LayoutParams(dp(94),dp(33)));root.addView(header);
-        status=text("读取中…",11); status.setPadding(0,dp(3),0,dp(3)); root.addView(status);
-        search=new EditText(this); search.setSingleLine(true); search.setTextSize(13); search.setHint("搜索应用或包名");
+        header.addView(button(s("setup"),()->setup()),new LinearLayout.LayoutParams(dp(94),dp(33)));root.addView(header);
+        status=text(s("loading"),11); status.setPadding(0,dp(3),0,dp(3)); root.addView(status);
+        search=new EditText(this); search.setSingleLine(true); search.setTextSize(13); search.setHint(s("search"));
         search.setTextColor(Color.WHITE); search.setHintTextColor(Color.LTGRAY); root.addView(search,new LinearLayout.LayoutParams(-1,dp(40)));
         LinearLayout toolbar=new LinearLayout(this);
-        filter=button("全部应用",()->{selectedOnly=!selectedOnly;filter.setText(selectedOnly?"已添加":"全部应用"); render();});
+        filter=button(s("all"),()->{selectedOnly=!selectedOnly;filter.setText(selectedOnly?s("added"):s("all")); render();});
         toolbar.addView(filter,new LinearLayout.LayoutParams(0,dp(36),1));
-        toolbar.addView(button("刷新",()->reload()),new LinearLayout.LayoutParams(0,dp(36),1));
-        toolbar.addView(button("撤销",()->undo()),new LinearLayout.LayoutParams(0,dp(36),1));
-        toolbar.addView(button("说明",()->help()),new LinearLayout.LayoutParams(0,dp(36),1)); root.addView(toolbar);
+        toolbar.addView(button(s("refresh"),()->reload()),new LinearLayout.LayoutParams(0,dp(36),1));
+        toolbar.addView(button(s("undo"),()->undo()),new LinearLayout.LayoutParams(0,dp(36),1));
+        toolbar.addView(button(s("help"),()->help()),new LinearLayout.LayoutParams(0,dp(36),1)); root.addView(toolbar);
         ScrollView scroll=new ScrollView(this); scroll.setFillViewport(true);
         rows=new LinearLayout(this); rows.setOrientation(LinearLayout.VERTICAL); scroll.addView(rows);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1)); setContentView(root);
@@ -84,12 +110,12 @@ public class MainActivity extends Activity {
         permission=checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS")==PackageManager.PERMISSION_GRANTED;
         try { supported="9.1.09".equals(getPackageManager().getPackageInfo("com.samsung.android.multistar",0).versionName); }
         catch(Exception e){supported=false;}
-        try { repository=new Repository(read()); } catch(Exception e){repository=null;notice=e.getMessage();}
+        try { repository=new Repository(read()); } catch(Exception e){repository=null;notice=errorText(e.getMessage());}
         Intent i=new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
         List<ResolveInfo> found=getPackageManager().queryIntentActivities(i,0);
         labels.clear(); apps.clear(); Set<String> seen=new HashSet<>();
-        for(ResolveInfo r:found) {String p=r.activityInfo.packageName; if(seen.add(p)){apps.add(r);labels.put(p,r.loadLabel(getPackageManager()).toString());}}
-        java.text.Collator collator=java.text.Collator.getInstance(java.util.Locale.CHINA);
+        for(ResolveInfo r:found) {String p=r.activityInfo.packageName; if(seen.add(p)){apps.add(r);labels.put(p,SELF.equals(p)?s("app_name"):r.loadLabel(getPackageManager()).toString());}}
+        java.text.Collator collator=java.text.Collator.getInstance(getResources().getConfiguration().getLocales().get(0));
         apps.sort((a,b)->collator.compare(labels.get(a.activityInfo.packageName),labels.get(b.activityInfo.packageName)));
         render();
     }
@@ -111,97 +137,97 @@ public class MainActivity extends Activity {
             row.addView(names,new LinearLayout.LayoutParams(0,dp(43),1)); names.setGravity(Gravity.CENTER_VERTICAL);
             names.setOnClickListener(v->launch(p));
             CheckBox check=new CheckBox(this);check.setButtonTintList(android.content.res.ColorStateList.valueOf(accent));
-            check.setContentDescription("添加到副屏："+label); check.setChecked(added);check.setEnabled(writable()&&!SELF.equals(p));
+            check.setContentDescription(s("add_description",label)); check.setChecked(added);check.setEnabled(writable()&&!SELF.equals(p));
             check.setOnClickListener(v->change(p,check.isChecked())); row.addView(check,new LinearLayout.LayoutParams(dp(43),dp(43)));rows.addView(row);
             View line=new View(this);line.setBackgroundColor(Color.rgb(42,51,55));rows.addView(line,new LinearLayout.LayoutParams(-1,dp(.5f)));
         }
-        String message=!supported?"仅支持 MultiStar 9.1.09，当前为只读":!permission?"点右上角：Shizuku 或 ADB 授权":repository==null?notice:"已添加 "+selected+" · 当前显示 "+shown;
+        String message=!supported?s("read_only"):!permission?s("needs_grant"):repository==null?notice:s("counts",selected,shown);
         status.setText(message+(notice.isEmpty()?"":"\n"+notice));
-        if(shown==0)rows.addView(text("没有匹配的应用",14));
+        if(shown==0)rows.addView(text(s("no_matches"),14));
     }
     private void change(String p, boolean add) {
         try {
-            if(!writable())throw new IllegalStateException("尚未获得写入权限");
+            if(!writable())throw new IllegalStateException(s("no_permission"));
             String before=read(); String after=new Repository(before).change(p,user,add);
-            if(before.equals(after)){notice="名单已是目标状态";render();return;}
-            if(!before.equals(read()))throw new IllegalStateException("设置刚被其他程序修改，请刷新后重试");
-            if(!Settings.Secure.putString(getContentResolver(),Repository.KEY,after)||!after.equals(read()))throw new IllegalStateException("保存未成功，请刷新后检查");
+            if(before.equals(after)){notice=s("no_change");render();return;}
+            if(!before.equals(read()))throw new IllegalStateException(s("concurrent_change"));
+            if(!Settings.Secure.putString(getContentResolver(),Repository.KEY,after)||!after.equals(read()))throw new IllegalStateException(s("save_failed"));
             if(!SELF.equals(p))prefs.edit().putString("before",before).putString("after",after).commit();
             else prefs.edit().remove("before").remove("after").commit();
             repository=new Repository(after);
-            notice="已保存；图标未更新时，切换一次副屏小组件";
-            Toast.makeText(this,add?"已添加到副屏":"已从副屏移除",Toast.LENGTH_SHORT).show();
-        }catch(Exception e){notice=e.getMessage();try{repository=new Repository(read());}catch(Exception ignored){repository=null;}}
+            notice=s("saved");
+            Toast.makeText(this,add?s("toast_added"):s("toast_removed"),Toast.LENGTH_SHORT).show();
+        }catch(Exception e){notice=errorText(e.getMessage());try{repository=new Repository(read());}catch(Exception ignored){repository=null;}}
         render();
     }
     private void undo() {
         String before=prefs.getString("before",null), after=prefs.getString("after",null);
-        if(before==null||after==null){Toast.makeText(this,"还没有可撤销的修改",Toast.LENGTH_SHORT).show();return;}
-        new AlertDialog.Builder(this).setMessage("撤销本工具上一次应用名单修改？").setNegativeButton("取消",null).setPositiveButton("撤销",(d,w)->{
+        if(before==null||after==null){Toast.makeText(this,s("no_undo"),Toast.LENGTH_SHORT).show();return;}
+        new AlertDialog.Builder(this).setMessage(s("undo_confirm")).setNegativeButton(s("cancel"),null).setPositiveButton(s("undo"),(d,w)->{
             try {
-                if(!writable())throw new IllegalStateException("当前不允许写入");
-                if(!after.equals(read()))throw new IllegalStateException("名单已被其他程序修改，无法安全撤销");
-                if(!Settings.Secure.putString(getContentResolver(),Repository.KEY,before)||!before.equals(read()))throw new IllegalStateException("撤销未成功");
-                prefs.edit().remove("before").remove("after").commit();notice="已撤销；可切换一次副屏小组件刷新";
-            }catch(Exception e){notice=e.getMessage();} reload();
+                if(!writable())throw new IllegalStateException(s("not_writable"));
+                if(!after.equals(read()))throw new IllegalStateException(s("undo_conflict"));
+                if(!Settings.Secure.putString(getContentResolver(),Repository.KEY,before)||!before.equals(read()))throw new IllegalStateException(s("undo_failed"));
+                prefs.edit().remove("before").remove("after").commit();notice=s("undone");
+            }catch(Exception e){notice=errorText(e.getMessage());} reload();
         }).show();
     }
     private void launch(String p) {
         try {
-            Intent i=getPackageManager().getLaunchIntentForPackage(p);if(i==null)throw new IllegalStateException("应用没有可启动的入口");
+            Intent i=getPackageManager().getLaunchIntentForPackage(p);if(i==null)throw new IllegalStateException(s("no_launch"));
             ActivityOptions options=ActivityOptions.makeBasic();options.setLaunchDisplayId(getDisplay().getDisplayId());startActivity(i,options.toBundle());
-        }catch(Exception e){Toast.makeText(this,"启动失败："+e.getMessage(),Toast.LENGTH_LONG).show();}
+        }catch(Exception e){Toast.makeText(this,s("launch_failed",errorText(e.getMessage())),Toast.LENGTH_LONG).show();}
     }
     private void help() {
-        String info="勾选右侧方框添加到 MultiStar 副屏名单，取消勾选移除。点应用名称可尝试在当前屏幕打开。新装应用点“刷新”即可列出。\n\n保存后若 MultiStar 图标未更新，请切换到其他副屏小组件再回来。\n\n方式一：电脑通过 ADB 安装并授权。\n方式二：手机安装 APK，在 Shizuku 已运行时点右上角“授权 / 入口”，选择 Shizuku 授权并允许。只执行一次本工具权限授予，之后无需持续连接。\n\nShizuku 需为 v13 或更新版。仅安装而未启动 Shizuku 无法授权；工具也需要能被首次打开。\n\n仅适配 MultiStar 9.1.09，不申请联网权限。撤销会检查名单是否被其他程序更改。";
+        String info=s("help_text");
         TextView content=text(info,13); content.setPadding(dp(14),dp(8),dp(14),dp(8)); content.setTextIsSelectable(true);
-        ScrollView s=new ScrollView(this);s.addView(content);new AlertDialog.Builder(this).setTitle("使用说明 · v0.2").setView(s).setPositiveButton("知道了",null).show();
+        ScrollView s=new ScrollView(this);s.addView(content);new AlertDialog.Builder(this).setTitle(s("help_title")).setView(s).setPositiveButton(s("ok"),null).show();
     }
     private void setup(){
-        new AlertDialog.Builder(this).setTitle("首次设置").setItems(new String[]{"通过 Shizuku 授权并添加入口","已有 ADB 权限：添加 / 修复入口","查看安装说明"},(d,which)->{
-            if(which==0)authorizeWithShizuku();else if(which==1)repairEntry();else help();
-        }).setNegativeButton("取消",null).show();
+        new AlertDialog.Builder(this).setTitle(s("setup_title")).setItems(new String[]{s("shizuku_option"),s("adb_option"),s("instructions_option"),s("language")},(d,which)->{
+            if(which==0)authorizeWithShizuku();else if(which==1)repairEntry();else if(which==2)help();else chooseLanguage();
+        }).setNegativeButton(s("cancel"),null).show();
     }
     private void repairEntry(){
-        reload();if(!writable()){notice="请先完成授权，且确认 MultiStar 版本兼容";render();return;}
+        reload();if(!writable()){notice=s("grant_first");render();return;}
         change(SELF,true);
     }
     private void authorizeWithShizuku(){
         if(authorizing)return;
         try {
-            if(!supported||repository==null)throw new IllegalStateException("先确认 MultiStar 9.1.09 和配置格式兼容");
-            if(!Shizuku.pingBinder())throw new IllegalStateException("Shizuku 未运行，请先到 Shizuku 启动服务，再返回此处");
-            if(Shizuku.getVersion()<13)throw new IllegalStateException("需要 Shizuku v13 或更新版本");
-            authorizing=true;notice="等待 Shizuku 授权…";render();
+            if(!supported||repository==null)throw new IllegalStateException(s("compat_first"));
+            if(!Shizuku.pingBinder())throw new IllegalStateException(s("shizuku_stopped"));
+            if(Shizuku.getVersion()<13)throw new IllegalStateException(s("shizuku_version"));
+            authorizing=true;notice=s("waiting_grant");render();
             if(Shizuku.checkSelfPermission()==PackageManager.PERMISSION_GRANTED)bindGrantService();
-            else if(Shizuku.shouldShowRequestPermissionRationale())throw new IllegalStateException("请在 Shizuku 的授权应用列表中允许本工具");
+            else if(Shizuku.shouldShowRequestPermissionRationale())throw new IllegalStateException(s("shizuku_settings"));
             else Shizuku.requestPermission(42);
-        }catch(Exception e){authorizing=false;notice=e.getMessage();render();}
+        }catch(Exception e){authorizing=false;notice=errorText(e.getMessage());render();}
     }
     private void bindGrantService(){
         try {
-            grantArgs=new Shizuku.UserServiceArgs(new ComponentName(this,GrantService.class)).daemon(false).processNameSuffix("grant").version(2);
+            grantArgs=new Shizuku.UserServiceArgs(new ComponentName(this,GrantService.class)).daemon(false).processNameSuffix("grant").version(3);
             grantConnection=new ServiceConnection(){
                 @Override public void onServiceConnected(ComponentName name,IBinder binder){
                     new Thread(()->{
                         String error=null;Parcel input=Parcel.obtain(),output=Parcel.obtain();
-                        try {input.writeInterfaceToken(GrantService.DESCRIPTOR);if(!binder.transact(GrantService.GRANT,input,output,0))throw new IllegalStateException("授权服务未响应");output.readException();output.readString();}
+                        try {input.writeInterfaceToken(GrantService.DESCRIPTOR);if(!binder.transact(GrantService.GRANT,input,output,0))throw new IllegalStateException(s("service_no_response"));output.readException();output.readString();}
                         catch(Exception e){error=e.getMessage();}finally{input.recycle();output.recycle();}
                         final String result=error;
                         handler.post(()->{
                             if(isDestroyed())return;
                             authorizing=false;releaseGrantService();reload();
-                            if(result!=null){notice="授权失败："+result;render();}
-                            else if(!permission){notice="权限尚未生效，请刷新后重试";render();}
-                            else {repairEntry();notice="Shizuku 已完成授权；"+notice;render();}
+                            if(result!=null){notice=s("grant_failed",errorText(result));render();}
+                            else if(!permission){notice=s("grant_not_effective");render();}
+                            else {repairEntry();notice=s("grant_done",notice);render();}
                         });
                     },"ShizukuGrant").start();
                 }
-                @Override public void onServiceDisconnected(ComponentName name){if(authorizing){authorizing=false;notice="Shizuku 授权服务意外断开，请重试";render();}}
+                @Override public void onServiceDisconnected(ComponentName name){if(authorizing){authorizing=false;notice=s("service_disconnected");render();}}
             };
             Shizuku.bindUserService(grantArgs,grantConnection);
             handler.postDelayed(grantTimeout,20000);
-        }catch(Exception e){authorizing=false;releaseGrantService();notice=e.getMessage();render();}
+        }catch(Exception e){authorizing=false;releaseGrantService();notice=errorText(e.getMessage());render();}
     }
     private void releaseGrantService(){
         handler.removeCallbacks(grantTimeout);

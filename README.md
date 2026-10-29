@@ -1,5 +1,7 @@
 # 副屏应用管理 · Z Flip Cover Manager
 
+**简体中文 · [English](README.en.md)**
+
 **在 Galaxy Z Flip5 的副屏上管理 MultiStar 应用名单。** 主屏损坏后，也能为后来安装的 App 添加副屏入口。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-8de5d6.svg)](LICENSE)
@@ -18,6 +20,7 @@ MultiStar 可以让应用运行在 Z Flip5 的副屏，但新装 App 通常需�
 - 支持查看已添加应用、撤销上一次修改。
 - 支持 **ADB** 和 **Shizuku** 两种首次设置方式。
 - 无需 root；App 不申请联网权限。
+- 界面使用系统默认字体；默认跟随系统语言，中文显示中文，其他语言统一显示英文。可在“授权 / 入口”→“语言”手动切换。
 - 校验 MultiStar 版本与配置格式，保留其他配置字段。
 
 ## 副屏实机截图
@@ -27,6 +30,10 @@ MultiStar 可以让应用运行在 Z Flip5 的副屏，但新装 App 通常需�
 | 选择首次设置方式 | Shizuku 权限确认 | 授权完成 |
 | --- | --- | --- |
 | <img src="docs/images/setup-options.png" alt="首次设置菜单，可选择 Shizuku 授权或修复副屏入口" width="260"> | <img src="docs/images/shizuku-permission.png" alt="在副屏允许本工具使用 Shizuku" width="260"> | <img src="docs/images/authorized.png" alt="Shizuku 授权完成后的副屏管理界面" width="260"> |
+
+英文界面：
+
+<img src="docs/images/english.png" alt="英文 Cover Manager 界面，包含搜索和应用勾选" width="320">
 
 ## 兼容性
 
@@ -55,7 +62,7 @@ MultiStar 可以让应用运行在 Z Flip5 的副屏，但新装 App 通常需�
 
 ```powershell
 # USB 或已连接的无线 ADB：用 adb devices 查看设备标识
-.\setup.ps1 -Device '设备序列号或IP:连接端口' -ApkPath '.\CoverManager-v0.2.0.apk'
+.\setup.ps1 -Device '设备序列号或IP:连接端口' -ApkPath '.\CoverManager-v0.3.0.apk'
 ```
 
 脚本依次安装 APK、授予权限、备份当前配置、将本工具加入两份副屏名单，并校验其他字段未改变。备份保存在当前目录的 `.covermanager-backups` 下，请留在自己的电脑上。
@@ -63,7 +70,7 @@ MultiStar 可以让应用运行在 Z Flip5 的副屏，但新装 App 通常需�
 也可以手动操作：
 
 ```sh
-adb -s DEVICE install -r CoverManager-v0.2.0.apk
+adb -s DEVICE install -r CoverManager-v0.3.0.apk
 adb -s DEVICE shell pm grant local.covermanager android.permission.WRITE_SECURE_SETTINGS
 adb -s DEVICE shell am start --display 1 -n local.covermanager/.MainActivity
 ```
@@ -109,7 +116,7 @@ Shizuku 在这里执行一次固定的权限授予。完成后，日常增删名
 .\build.ps1 -Jdk 'C:\path\to\jdk-17' -AndroidSdk 'C:\path\to\Android\Sdk'
 ```
 
-脚本从 Maven Central 获取 Shizuku API 13.1.5 的四个组件，按 `dependencies.json` 校验 SHA-256，运行配置解析器测试，再构建并校验 APK。输出位于 `build/CoverManager-v0.2.0.apk`。
+脚本从 Maven Central 获取 Shizuku API 13.1.5 的四个组件，按 `dependencies.json` 校验 SHA-256，运行配置解析器测试，再构建并校验 APK。输出位于 `build/CoverManager-v0.3.0.apk`。
 
 自行构建默认生成本地开发签名。它与正式 Release 的签名不同，无法直接覆盖已安装的 Release；请保留自己的签名文件，以便后续更新。仓库不包含签名私钥。CI 构建只用于验证，不作为稳定签名发布源。
 

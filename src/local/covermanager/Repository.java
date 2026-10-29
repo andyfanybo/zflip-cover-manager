@@ -7,10 +7,10 @@ public final class Repository {
     public static final String KEY = "multistar_setting_repository";
     private final String[] fields;
     public Repository(String value) {
-        if (value == null) throw new IllegalArgumentException("尚未找到 MultiStar 配置");
+        if (value == null) throw new IllegalArgumentException("cm_config_missing");
         fields = value.split("/", -1);
         if (fields.length != 28 || !fields[27].isEmpty())
-            throw new IllegalArgumentException("配置格式不匹配，已停止写入");
+            throw new IllegalArgumentException("cm_config_format");
         validate(fields[20], false);
         validate(fields[25], true);
     }
@@ -25,12 +25,12 @@ public final class Repository {
             String[] pair = s.split(",", -1);
             if ((!withUser && (pair.length != 1 || !pkg(s))) ||
                 (withUser && (pair.length != 2 || !pkg(pair[0]) || !pair[1].matches("[0-9]+"))))
-                throw new IllegalArgumentException("应用名单格式异常，已停止写入");
+                throw new IllegalArgumentException("cm_list_format");
         }
     }
     public boolean contains(String p, int user) { return entries(fields[25]).contains(p + "," + user); }
     public String change(String p, int user, boolean add) {
-        if (!pkg(p) || user < 0) throw new IllegalArgumentException("无效的应用或用户 ID");
+        if (!pkg(p) || user < 0) throw new IllegalArgumentException("cm_target_invalid");
         List<String> legacy = entries(fields[20]);
         List<String> modern = entries(fields[25]);
         String item = p + "," + user;
