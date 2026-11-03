@@ -8,9 +8,20 @@ Manage the MultiStar app list from the Galaxy Z Flip5 cover screen. After one-ti
 
 ## Interface
 
-<img src="docs/images/english.png" width="340" alt="Cover Manager in English">
+| Main screen | Enable-all confirmation | Undo |
+| --- | --- | --- |
+| <img src="docs/images/main-v040.png" width="240" alt="v0.4.0 main screen"> | <img src="docs/images/bulk-enable-confirm-v040.png" width="240" alt="Batch confirmation showing scope and count"> | <img src="docs/images/undo-example.png" width="240" alt="Undo an app-list change"> |
 
-The screenshot is filtered to this tool. Clear the search to see all apps.
+<details>
+<summary>Setup and English interface</summary>
+
+| Setup | Shizuku authorization | English UI |
+| --- | --- | --- |
+| <img src="docs/images/setup-options.png" width="240" alt="Setup options"> | <img src="docs/images/shizuku-permission.png" width="240" alt="Shizuku authorization"> | <img src="docs/images/english.png" width="240" alt="English interface"> |
+
+</details>
+
+Screenshots are from development and device testing; some show earlier interfaces. Personal app lists are excluded. Enable buttons are dimmed when all apps in their scope are already enabled.
 
 ## Installation
 
@@ -44,16 +55,16 @@ Then choose **Setup → ADB already granted: add / repair entry**. Unlock the ph
 
 ## Usage
 
-- The top **Enable all** button adds every launchable app.
-- Tap **All** to filter **Enabled / Disabled**, then disable or enable all results. Search narrows the result actions; the top **Enable all** always includes all apps.
-- Undo restores an entire batch. The manager entry is kept. Enabled means included in the cover list, not currently running.
+| Action | Scope |
+| --- | --- |
+| Top Enable all | Every launchable app, ignoring search and filters |
+| Enabled → Disable all | Current filter and search results; keeps the manager entry |
+| Disabled → Enable all | Current filter and search results |
+| Undo | Restores the last change, including an entire batch |
 
-- Tap **Refresh** after installing an app, then search and select it. Clear its checkbox to remove it.
-- If MultiStar icons have not refreshed, switch cover widgets and back.
-- **Undo** restores the last list change, unless another app has since changed the configuration.
-- The app uses the system font. Chinese system locales use Chinese; all others use English. You can also select a language in Setup.
+Enabled means included in the MultiStar cover list, not currently running. You can also select apps individually. Refresh after installing an app, and switch cover widgets if icons have not updated.
 
-There is no MultiStar version restriction. Unrecognized configuration formats are read-only. Tested on a Z Flip5 SC-54D with Android 15 / One UI 7 and MultiStar 9.1.09. Minimum Android version: 11.
+Uses the system font and supports Chinese and English. No MultiStar version restriction; unknown configuration formats are read-only. Tested on Z Flip5 SC-54D / Android 15 / One UI 7. Minimum Android version: 11.
 
 ## Build
 

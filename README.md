@@ -8,11 +8,20 @@
 
 ## 界面
 
+| 新版主界面 | 一键全启用确认 | 撤销操作 |
+| --- | --- | --- |
+| <img src="docs/images/main-v040.png" width="240" alt="v0.4.0 主界面"> | <img src="docs/images/bulk-enable-confirm-v040.png" width="240" alt="批量启用确认，显示操作范围与应用数量"> | <img src="docs/images/undo-example.png" width="240" alt="撤销名单修改"> |
+
+<details>
+<summary>首次授权与英文界面</summary>
+
 | 首次设置 | Shizuku 授权 | 英文界面 |
 | --- | --- | --- |
-| <img src="docs/images/setup-options.png" width="260" alt="首次设置"> | <img src="docs/images/shizuku-permission.png" width="260" alt="Shizuku 授权"> | <img src="docs/images/english.png" width="260" alt="英文界面"> |
+| <img src="docs/images/setup-options.png" width="240" alt="首次设置"> | <img src="docs/images/shizuku-permission.png" width="240" alt="Shizuku 授权"> | <img src="docs/images/english.png" width="240" alt="英文界面"> |
 
-截图仅显示本工具。清空搜索框可查看全部应用。
+</details>
+
+截图来自开发和实测过程，部分为早期界面。个人应用列表已避开；应用全部启用后，对应按钮会变灰。
 
 ## 安装
 
@@ -46,16 +55,16 @@ adb -s DEVICE shell am start --display 1 -n local.covermanager/.MainActivity
 
 ## 使用
 
-- 顶部“一键全启用”添加所有可启动应用。
-- 点“全部”筛选“已启用 / 未启用”，可分别全部取消或全部启用。搜索后，批量操作只处理当前结果；顶部“一键全启用”始终处理全部应用。
-- 批量修改支持一次撤销，管理器入口始终保留。“启用”指加入副屏名单，不是应用正在运行。
+| 操作 | 范围 |
+| --- | --- |
+| 一键全启用 | 所有可启动应用，忽略搜索和筛选 |
+| 已启用 → 全部取消 | 当前筛选和搜索结果，保留管理器入口 |
+| 未启用 → 全部启用 | 当前筛选和搜索结果 |
+| 撤销 | 恢复上一次修改，支持整批撤销 |
 
-- 新装 App 后点“刷新”，搜索并勾选即可添加；取消勾选即可移除。
-- MultiStar 图标未更新时，切换一次副屏小组件。
-- “撤销”恢复上一次名单修改。若其他程序已改动配置，会停止撤销。
-- 字体跟随系统。默认中文系统显示中文，其余语言显示英文，也可在设置中手动切换。
+“启用”表示加入 MultiStar 副屏名单，不是应用正在运行。也可以逐个勾选或取消；新装 App 后点“刷新”。图标未更新时，切换一次副屏小组件。
 
-不限制 MultiStar 版本；配置格式无法识别时只读。实测环境为 Z Flip5 SC-54D、Android 15 / One UI 7、MultiStar 9.1.09。最低系统为 Android 11。
+字体跟随系统，支持中文和英文。不限制 MultiStar 版本；配置格式无法识别时只读。实测 Z Flip5 SC-54D / Android 15 / One UI 7，最低系统为 Android 11。
 
 ## 构建
 
