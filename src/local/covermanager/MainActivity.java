@@ -20,7 +20,9 @@ public class MainActivity extends Activity {
     private LinearLayout rows;
     private EditText search;
     private Button filter;
-    private boolean selectedOnly;
+    private Button enableAll, enableResults, disableResults;
+    private static final int ALL=0, ENABLED=1, DISABLED=2;
+    private int filterMode=ALL;
     private boolean multistarAvailable;
     private boolean permission;
     private Repository repository;
@@ -92,11 +94,17 @@ public class MainActivity extends Activity {
         search=new EditText(this); search.setSingleLine(true); search.setTextSize(13); search.setHint(s("search"));
         search.setTextColor(Color.WHITE); search.setHintTextColor(Color.LTGRAY); root.addView(search,new LinearLayout.LayoutParams(-1,dp(40)));
         LinearLayout toolbar=new LinearLayout(this);
-        filter=button(s("all"),()->{selectedOnly=!selectedOnly;filter.setText(selectedOnly?s("added"):s("all")); render();});
+        filter=button(s("all"),()->chooseFilter());
         toolbar.addView(filter,new LinearLayout.LayoutParams(0,dp(36),1));
         toolbar.addView(button(s("refresh"),()->reload()),new LinearLayout.LayoutParams(0,dp(36),1));
         toolbar.addView(button(s("undo"),()->undo()),new LinearLayout.LayoutParams(0,dp(36),1));
-        toolbar.addView(button(s("help"),()->help()),new LinearLayout.LayoutParams(0,dp(36),1)); root.addView(toolbar);
+        enableAll=button(s("enable_every_app"),()->batchChange(true,true));
+        toolbar.addView(enableAll,new LinearLayout.LayoutParams(0,dp(36),1)); root.addView(toolbar);
+        LinearLayout batchbar=new LinearLayout(this);
+        enableResults=button(s("enable_results"),()->batchChange(true,false));
+        disableResults=button(s("disable_results"),()->batchChange(false,false));
+        batchbar.addView(enableResults,new LinearLayout.LayoutParams(0,dp(36),1));
+        batchbar.addView(disableResults,new LinearLayout.LayoutParams(0,dp(36),1));root.addView(batchbar);
         ScrollView scroll=new ScrollView(this); scroll.setFillViewport(true);
         rows=new LinearLayout(this); rows.setOrientation(LinearLayout.VERTICAL); scroll.addView(rows);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1)); setContentView(root);
@@ -106,6 +114,28 @@ public class MainActivity extends Activity {
     @Override protected void onDestroy(){Shizuku.removeRequestPermissionResultListener(shizukuPermission);releaseGrantService();super.onDestroy();}
     private String read() { return Settings.Secure.getString(getContentResolver(),Repository.KEY); }
     private boolean writable() {return multistarAvailable && permission && repository!=null;}
+    private void chooseFilter(){
+        new AlertDialog.Builder(this).setTitle(s("filter_title"))
+            .setSingleChoiceItems(new String[]{s("all"),s("filter_enabled"),s("filter_disabled")},filterMode,(dialog,which)->{
+                filterMode=which;dialog.dismiss();render();
+            }).setNegativeButton(s("cancel"),null).show();
+    }
+    private boolean matches(String p, Repository value){
+        boolean added=value!=null&&value.contains(p,user);
+        if((filterMode==ENABLED&&!added)||(filterMode==DISABLED&&added))return false;
+        String q=search.getText().toString().trim().toLowerCase(Locale.ROOT);
+        String label=labels.get(p);
+        return q.isEmpty()||label.toLowerCase(Locale.ROOT).contains(q)||p.toLowerCase(Locale.ROOT).contains(q);
+    }
+    private List<String> batchTargets(Repository value, boolean add, boolean all){
+        List<String> targets=new ArrayList<>();
+        for(ResolveInfo info:apps){
+            String p=info.activityInfo.packageName;
+            if(!add&&SELF.equals(p))continue;
+            if((all||matches(p,value))&&value.contains(p,user)!=add)targets.add(p);
+        }
+        return targets;
+    }
     private void reload() {
         permission=checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS")==PackageManager.PERMISSION_GRANTED;
         try { multistarAvailable=getPackageManager().getApplicationInfo("com.samsung.android.multistar",0).enabled; }
@@ -121,13 +151,13 @@ public class MainActivity extends Activity {
     }
     private void render() {
         if(rows==null)return; rows.removeAllViews();
-        String q=search.getText().toString().trim().toLowerCase(Locale.ROOT); int selected=0,shown=0;
+        int selected=0,shown=0;
+        filter.setText(filterMode==ENABLED?s("filter_enabled"):filterMode==DISABLED?s("filter_disabled"):s("all"));
         for(ResolveInfo r:apps) {
             String p=r.activityInfo.packageName; boolean added=repository!=null&&repository.contains(p,user);
             if(added) selected++;
             String label=labels.get(p);
-            if(selectedOnly&&!added)continue;
-            if(!q.isEmpty()&&!label.toLowerCase(Locale.ROOT).contains(q)&&!p.toLowerCase(Locale.ROOT).contains(q))continue;
+            if(!matches(p,repository))continue;
             shown++;
             LinearLayout row=new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(0,dp(3),0,dp(3));
             ImageView icon=new ImageView(this); icon.setImageDrawable(r.loadIcon(getPackageManager())); row.addView(icon,new LinearLayout.LayoutParams(dp(29),dp(29)));
@@ -144,19 +174,53 @@ public class MainActivity extends Activity {
         String message=!multistarAvailable?s("read_only"):!permission?s("needs_grant"):repository==null?notice:s("counts",selected,shown);
         status.setText(message+(notice.isEmpty()?"":"\n"+notice));
         if(shown==0)rows.addView(text(s("no_matches"),14));
+        enableResults.setText(filterMode==DISABLED?s("enable_all"):s("enable_results"));
+        disableResults.setText(filterMode==ENABLED?s("disable_all"):s("disable_results"));
+        enableResults.setVisibility(filterMode==ENABLED?View.GONE:View.VISIBLE);
+        disableResults.setVisibility(filterMode==DISABLED?View.GONE:View.VISIBLE);
+        boolean canWrite=writable();
+        enableAll.setEnabled(canWrite&&!batchTargets(repository,true,true).isEmpty());
+        enableResults.setEnabled(canWrite&&!batchTargets(repository,true,false).isEmpty());
+        disableResults.setEnabled(canWrite&&!batchTargets(repository,false,false).isEmpty());
+    }
+    private boolean saveChange(String before,String after,boolean remember){
+        if(before.equals(after)){notice=s("no_change");return false;}
+        if(!before.equals(read()))throw new IllegalStateException(s("concurrent_change"));
+        if(!Settings.Secure.putString(getContentResolver(),Repository.KEY,after)||!after.equals(read()))throw new IllegalStateException(s("save_failed"));
+        if(remember)prefs.edit().putString("before",before).putString("after",after).commit();
+        else prefs.edit().remove("before").remove("after").commit();
+        repository=new Repository(after);
+        return true;
+    }
+    private void batchChange(boolean add,boolean all){
+        try {
+            reload();
+            if(!writable())throw new IllegalStateException(s("no_permission"));
+            String before=read();Repository current=new Repository(before);
+            List<String> targets=batchTargets(current,add,all);
+            if(targets.isEmpty()){notice=s("no_change");render();return;}
+            String after=current.changeMany(targets,user,add,SELF);
+            String message=s(add?"batch_enable_confirm":"batch_disable_confirm",targets.size());
+            if(all)message=s("batch_global_scope")+"\n\n"+message;
+            else message=s("batch_filtered_scope")+"\n\n"+message;
+            new AlertDialog.Builder(this).setTitle(s("batch_title")).setMessage(message)
+                .setNegativeButton(s("cancel"),null).setPositiveButton(s("apply"),(dialog,which)->{
+                    try {
+                        if(!writable())throw new IllegalStateException(s("no_permission"));
+                        if(saveChange(before,after,true))notice=s(add?"batch_enabled":"batch_disabled",targets.size());
+                    }catch(Exception e){notice=errorText(e.getMessage());}
+                    reload();
+                }).show();
+        }catch(Exception e){notice=errorText(e.getMessage());render();}
     }
     private void change(String p, boolean add) {
         try {
             if(!writable())throw new IllegalStateException(s("no_permission"));
             String before=read(); String after=new Repository(before).change(p,user,add);
-            if(before.equals(after)){notice=s("no_change");render();return;}
-            if(!before.equals(read()))throw new IllegalStateException(s("concurrent_change"));
-            if(!Settings.Secure.putString(getContentResolver(),Repository.KEY,after)||!after.equals(read()))throw new IllegalStateException(s("save_failed"));
-            if(!SELF.equals(p))prefs.edit().putString("before",before).putString("after",after).commit();
-            else prefs.edit().remove("before").remove("after").commit();
-            repository=new Repository(after);
-            notice=s("saved");
-            Toast.makeText(this,add?s("toast_added"):s("toast_removed"),Toast.LENGTH_SHORT).show();
+            if(saveChange(before,after,!SELF.equals(p))){
+                notice=s("saved");
+                Toast.makeText(this,add?s("toast_added"):s("toast_removed"),Toast.LENGTH_SHORT).show();
+            }
         }catch(Exception e){notice=errorText(e.getMessage());try{repository=new Repository(read());}catch(Exception ignored){repository=null;}}
         render();
     }

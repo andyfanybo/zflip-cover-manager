@@ -14,8 +14,29 @@ public class RepositoryTest {
         String multi=new Repository(original).change("com.example.work",0,true);
         String removed=new Repository(multi).change("com.example.work",0,false);
         check(removed.equals(original));check(new Repository(removed).contains("com.example.work",10));
+        List<String> batch=Arrays.asList("com.example.old","com.example.newapp","com.example.work","com.example.newapp");
+        String bulk=new Repository(original).changeMany(batch,0,true,"local.covermanager");
+        Repository bulkRepo=new Repository(bulk);
+        for(String p:batch)check(bulkRepo.contains(p,0));
+        check(bulkRepo.contains("local.covermanager",0));
+        check(bulkRepo.contains("com.example.work",10));
+        check(bulk.equals(bulkRepo.changeMany(batch,0,true,"local.covermanager")));
+        String[] bulkFields=bulk.split("/",-1);
+        for(int i=0;i<28;i++)if(i!=20&&i!=25)check(f[i].equals(bulkFields[i]));
+        List<String> clearTargets=new ArrayList<>(batch);clearTargets.add("local.covermanager");
+        String cleared=bulkRepo.changeMany(clearTargets,0,false,"local.covermanager");
+        Repository clearedRepo=new Repository(cleared);
+        for(String p:batch)check(!clearedRepo.contains(p,0));
+        check(clearedRepo.contains("local.covermanager",0));
+        check(clearedRepo.contains("com.example.work",10));
+        check(cleared.split("/",-1)[20].equals("com.example.work;local.covermanager"));
+        check(bulkRepo.contains("com.example.old",0)); // batch methods do not mutate the source object
+        boolean invalidBatch=false;
+        try{bulkRepo.changeMany(Arrays.asList("com.example.newapp","bad;package"),0,false,"local.covermanager");}
+        catch(IllegalArgumentException e){invalidBatch=true;}
+        check(invalidBatch);check(bulkRepo.contains("com.example.old",0));
         boolean rejected=false;try{new Repository("bad");}catch(IllegalArgumentException e){rejected=true;}check(rejected);
         f[25]="com.example.bad,notUser";rejected=false;try{new Repository(String.join("/",f));}catch(IllegalArgumentException e){rejected=true;}check(rejected);
-        System.out.println("PASS: format validation, unrelated fields, idempotence, add/remove, profile preservation");
+        System.out.println("PASS: format validation, field/profile preservation, single/batch changes, idempotence, protected entry, invalid batch rejection");
     }
 }

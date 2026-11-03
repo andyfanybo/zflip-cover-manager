@@ -29,7 +29,7 @@
 从下载页获取 APK 和 `setup.ps1`，在装有 Android Platform Tools 的 Windows 电脑运行：
 
 ```powershell
-.\setup.ps1 -Device '设备序列号或IP:端口' -ApkPath '.\CoverManager-v0.3.1.apk'
+.\setup.ps1 -Device '设备序列号或IP:端口' -ApkPath '.\CoverManager-v0.4.0.apk'
 ```
 
 脚本会安装、授权、备份配置并添加副屏入口。备份保存在当前目录的 `.covermanager-backups`。
@@ -37,7 +37,7 @@
 也可以手动安装和授权：
 
 ```sh
-adb -s DEVICE install -r CoverManager-v0.3.1.apk
+adb -s DEVICE install -r CoverManager-v0.4.0.apk
 adb -s DEVICE shell pm grant local.covermanager android.permission.WRITE_SECURE_SETTINGS
 adb -s DEVICE shell am start --display 1 -n local.covermanager/.MainActivity
 ```
@@ -45,6 +45,10 @@ adb -s DEVICE shell am start --display 1 -n local.covermanager/.MainActivity
 打开后点“授权 / 入口”→“已有 ADB 权限：添加 / 修复入口”。手机需先解锁；测试机的副屏 ID 为 `1`。
 
 ## 使用
+
+- 顶部“一键全启用”添加所有可启动应用。
+- 点“全部”筛选“已启用 / 未启用”，可分别全部取消或全部启用。搜索后，批量操作只处理当前结果；顶部“一键全启用”始终处理全部应用。
+- 批量修改支持一次撤销，管理器入口始终保留。“启用”指加入副屏名单，不是应用正在运行。
 
 - 新装 App 后点“刷新”，搜索并勾选即可添加；取消勾选即可移除。
 - MultiStar 图标未更新时，切换一次副屏小组件。
@@ -61,7 +65,7 @@ adb -s DEVICE shell am start --display 1 -n local.covermanager/.MainActivity
 .\build.ps1 -Jdk 'C:\path\to\jdk-17' -AndroidSdk 'C:\path\to\Android\Sdk'
 ```
 
-输出为 `build/CoverManager-v0.3.1.apk`。脚本会下载并校验 Shizuku 依赖，运行测试，生成开发签名。自行构建的签名与 Release 不同，请保留自己的签名文件供后续更新。
+输出为 `build/CoverManager-v0.4.0.apk`。脚本会下载并校验 Shizuku 依赖，运行测试，生成开发签名。自行构建的签名与 Release 不同，请保留自己的签名文件供后续更新。
 
 问题反馈见 [Issues](https://github.com/andyfanybo/zflip-cover-manager/issues)，请注明机型和系统、MultiStar 版本。不要附上完整配置备份或个人应用列表。
 

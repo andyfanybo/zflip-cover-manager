@@ -4,7 +4,7 @@
     <string name="setup">Setup</string>
     <string name="loading">Loading…</string>
     <string name="search">Search apps or package names</string>
-    <string name="all">All apps</string>
+    <string name="all">All</string>
     <string name="added">Added</string>
     <string name="refresh">Refresh</string>
     <string name="undo">Undo</string>
@@ -44,7 +44,7 @@
     <string name="service_no_response">The authorization service did not respond.</string>
     <string name="grant_not_effective">Permission is not active yet. Refresh and retry.</string>
     <string name="service_disconnected">The Shizuku authorization service disconnected. Retry.</string>
-    <string name="counts">Added %1$d · Showing %2$d</string>
+    <string name="counts">Enabled %1$d · Showing %2$d</string>
     <string name="add_description">Add to cover screen: %1$s</string>
     <string name="launch_failed">Launch failed: %1$s</string>
     <string name="grant_failed">Authorization failed: %1$s</string>
@@ -58,5 +58,21 @@
     <string name="cm_target_invalid">Invalid app package or user ID.</string>
     <string name="cm_grant_timeout">The grant command timed out. Retry.</string>
     <string name="cm_grant_output">The grant command returned too much output.</string>
-    <string name="help_text">Select apps to add them to the MultiStar cover list. Clear a checkbox to remove an app. Tap Refresh after installing a new app.\n\nFor first-time setup, open Setup and use Shizuku, or grant permission with ADB. Shizuku v13+ must be running, and you must be able to open this app first.\n\nIf icons have not refreshed, switch cover widgets and back.\n\nThe app does not restrict MultiStar versions. An unrecognized configuration format is read-only.\n\nChange the display language under Setup → Language.</string>
+    <string name="help_text">Select an app to add it to the MultiStar cover list, or clear its checkbox to remove it. Tap Refresh after installing an app.\n\nTap All to filter enabled or disabled apps. Enabled means included in the cover list, not currently running.\n\nThe top Enable all button includes every launchable app and ignores the filter and search. Enable results / Disable results apply only to the current results. An entire batch can be undone. The manager entry is always kept.\n\nFor first-time setup, authorize with Shizuku or ADB. There is no MultiStar version restriction. Unknown configuration formats are read-only. Switch cover widgets if icons have not refreshed.</string>
+    <string name="filter_title">Filter cover apps</string>
+    <string name="filter_enabled">Enabled</string>
+    <string name="filter_disabled">Disabled</string>
+    <string name="enable_every_app">Enable all</string>
+    <string name="enable_all">Enable all</string>
+    <string name="disable_all">Disable all</string>
+    <string name="enable_results">Enable results</string>
+    <string name="disable_results">Disable results</string>
+    <string name="batch_title">Batch change</string>
+    <string name="apply">Apply</string>
+    <string name="batch_enable_confirm">Add %1$d apps to the cover list. This batch can be undone.</string>
+    <string name="batch_disable_confirm">Remove %1$d apps from the cover list. This batch can be undone. The manager entry will be kept.</string>
+    <string name="batch_global_scope">Scope: all launchable apps, regardless of the current filter or search.</string>
+    <string name="batch_filtered_scope">Scope: the current filter and search results.</string>
+    <string name="batch_enabled">Enabled %1$d apps. Switch cover widgets if icons have not refreshed.</string>
+    <string name="batch_disabled">Disabled %1$d apps. The manager entry is kept.</string>
 </resources>

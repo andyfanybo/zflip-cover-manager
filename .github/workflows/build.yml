@@ -1,6 +1,7 @@
 name: Build Android
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 permissions:
@@ -24,3 +25,10 @@ jobs:
       - name: Test and build
         shell: pwsh
         run: ./build.ps1 -Jdk $env:JAVA_HOME -AndroidSdk $env:ANDROID_HOME
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CoverManager-APK
+          path: build/CoverManager-v0.4.0.apk
+          if-no-files-found: error
+          retention-days: 14

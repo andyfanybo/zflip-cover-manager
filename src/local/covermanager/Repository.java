@@ -30,17 +30,31 @@ public final class Repository {
     }
     public boolean contains(String p, int user) { return entries(fields[25]).contains(p + "," + user); }
     public String change(String p, int user, boolean add) {
-        if (!pkg(p) || user < 0) throw new IllegalArgumentException("cm_target_invalid");
+        return changeMany(Collections.singletonList(p), user, add, null);
+    }
+    /** Return one complete value for a batch; never touches device settings itself. */
+    public String changeMany(Collection<String> packages, int user, boolean add, String keepEnabled) {
+        if (user < 0 || packages == null || (keepEnabled != null && !pkg(keepEnabled)))
+            throw new IllegalArgumentException("cm_target_invalid");
+        Set<String> targets = new LinkedHashSet<>(packages);
+        for (String p : targets) if (p == null || !pkg(p)) throw new IllegalArgumentException("cm_target_invalid");
+        if (!add && keepEnabled != null) targets.remove(keepEnabled);
         List<String> legacy = entries(fields[20]);
         List<String> modern = entries(fields[25]);
-        String item = p + "," + user;
-        if (add) {
-            if (!legacy.contains(p)) legacy.add(p);
-            if (!modern.contains(item)) modern.add(item);
-        } else {
-            modern.removeIf(item::equals);
-            boolean otherUser = modern.stream().anyMatch(s -> s.startsWith(p + ","));
-            if (!otherUser) legacy.removeIf(p::equals);
+        for (String p : targets) {
+            String item = p + "," + user;
+            if (add) {
+                if (!legacy.contains(p)) legacy.add(p);
+                if (!modern.contains(item)) modern.add(item);
+            } else {
+                modern.removeIf(item::equals);
+                boolean otherUser = modern.stream().anyMatch(s -> s.startsWith(p + ","));
+                if (!otherUser) legacy.removeIf(p::equals);
+            }
+        }
+        if (keepEnabled != null) {
+            if (!legacy.contains(keepEnabled)) legacy.add(keepEnabled);
+            if (!modern.contains(keepEnabled + "," + user)) modern.add(keepEnabled + "," + user);
         }
         String[] copy = fields.clone();
         copy[20] = legacy.isEmpty() ? "0" : String.join(";", legacy);

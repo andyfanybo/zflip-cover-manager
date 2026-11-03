@@ -27,7 +27,7 @@ Shizuku does not need to keep running afterward. You must be able to open this t
 Download the APK and `setup.ps1` from the release page. On Windows with Android Platform Tools installed, run:
 
 ```powershell
-.\setup.ps1 -Device 'SERIAL_OR_IP:PORT' -ApkPath '.\CoverManager-v0.3.1.apk'
+.\setup.ps1 -Device 'SERIAL_OR_IP:PORT' -ApkPath '.\CoverManager-v0.4.0.apk'
 ```
 
 The script installs the app, grants permission, backs up the configuration and adds the cover entry. Backups are saved to `.covermanager-backups` in the current directory.
@@ -35,7 +35,7 @@ The script installs the app, grants permission, backs up the configuration and a
 Or install and authorize manually:
 
 ```sh
-adb -s DEVICE install -r CoverManager-v0.3.1.apk
+adb -s DEVICE install -r CoverManager-v0.4.0.apk
 adb -s DEVICE shell pm grant local.covermanager android.permission.WRITE_SECURE_SETTINGS
 adb -s DEVICE shell am start --display 1 -n local.covermanager/.MainActivity
 ```
@@ -43,6 +43,10 @@ adb -s DEVICE shell am start --display 1 -n local.covermanager/.MainActivity
 Then choose **Setup → ADB already granted: add / repair entry**. Unlock the phone first. Display ID `1` is the cover screen on the test device.
 
 ## Usage
+
+- The top **Enable all** button adds every launchable app.
+- Tap **All** to filter **Enabled / Disabled**, then disable or enable all results. Search narrows the result actions; the top **Enable all** always includes all apps.
+- Undo restores an entire batch. The manager entry is kept. Enabled means included in the cover list, not currently running.
 
 - Tap **Refresh** after installing an app, then search and select it. Clear its checkbox to remove it.
 - If MultiStar icons have not refreshed, switch cover widgets and back.
@@ -59,7 +63,7 @@ Requires JDK 17, Android SDK Platform 35 and Build Tools 35.0.0:
 .\build.ps1 -Jdk 'C:\path\to\jdk-17' -AndroidSdk 'C:\path\to\Android\Sdk'
 ```
 
-Output: `build/CoverManager-v0.3.1.apk`. The script downloads and checks the Shizuku dependencies, runs tests and creates a development signing key. Its signature differs from the Release. Keep your own key for future updates.
+Output: `build/CoverManager-v0.4.0.apk`. The script downloads and checks the Shizuku dependencies, runs tests and creates a development signing key. Its signature differs from the Release. Keep your own key for future updates.
 
 Report issues in [Issues](https://github.com/andyfanybo/zflip-cover-manager/issues), including the device, system and MultiStar versions. Do not publish complete configuration backups or personal app lists.
 
